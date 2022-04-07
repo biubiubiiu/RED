@@ -1,0 +1,28 @@
+# seed = 1
+
+# Savings
+exp_dir = 'experiment'
+save_step = 50000
+
+# Dataset Settings
+data_dir = '/home/workflow/data/SID/Sony'
+num_workers = 8
+
+train_data = '[02]*_00_0.1s.ARW'  # select images with exposure time 0.1s, from both training and validation set
+val_data = '1*_00_0.1s.ARW'
+test_data = '1*_00_0.1s.ARW'
+
+# Learning Policy
+base_lr = 1e-4
+gamma = 0.1
+milestones = [ 500000 ]
+total_iters = 1000005
+
+batch_size = 8
+patch_size = 512
+
+gt_amp = false  # it true, use ground-truth exposure for pre-amplification
+
+# Runtime Settings
+log_step = 100
+eval_step = 50000
