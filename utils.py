@@ -98,6 +98,7 @@ class Timer(object):
         self.total_time = 0.
         self.calls = 0
         self.start_time = 0.
+        self.diff = 0.
 
     @property
     def average_time(self):
@@ -107,10 +108,10 @@ class Timer(object):
         self.start_time = time.time()
 
     def __exit__(self, type, value, traceback):
-        diff = time.time() - self.start_time
+        self.diff = time.time() - self.start_time
         self.calls += 1
-        self.total_time += diff
-        self.runtimes.append(diff)
+        self.total_time += self.diff
+        self.runtimes.append(self.diff)
         if len(self.runtimes) > self.win_size:
             self.runtimes.pop(0)
 
