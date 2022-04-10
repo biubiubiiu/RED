@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from data import train_dataloader, val_dataloader
 from model import RED
-from utils import Config, Timer, ensure_dir, init_env
+from utils import Timer, ensure_dir, init_env, parse_config
 
 
 def parse_arguments():
@@ -26,9 +26,11 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    config = Config(args.config)
+    config = parse_config(args.config)
     device = init_env(args, config)
+
     model = RED().to(device)
+
     optimizer = Adam(model.parameters(), lr=config.base_lr)
     scheduler = MultiStepLR(optimizer, milestones=config.milestones, gamma=config.gamma)
     msssim_loss = MS_SSIM(data_range=1.0, size_average=True, channel=3)

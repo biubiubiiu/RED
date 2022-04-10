@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import RandomCrop
 from tqdm import tqdm
 
-from utils import get_na, repeater
+from utils import repeater
 
 
 def train_dataloader(config):
@@ -121,3 +121,26 @@ class SID(Dataset):
             coeff = get_na(arr)
 
         return coeff
+
+
+def get_na(arr, amp=1.0):
+    """Estimate the amplification factor"""
+
+    bins = np.logspace(0, 8, 128, endpoint=True, base=2.0)  # create n bins
+    bins = (bins-1)/255.
+
+    weights = np.float32((np.logspace(0, 5, 127, endpoint=True, base=10.0)))
+    weights = np.flip(weights)
+    weights = weights / np.max(weights)
+
+    selection_dict = {w: np.logical_and(bins[i] <= arr, arr < bins[i+1])
+                      for i, w in enumerate(weights)}
+    weights = np.select(condlist=selection_dict.values(), choicelist=selection_dict.keys())
+    weights_sum = np.sum(weights, dtype=np.float64)
+
+    del selection_dict
+
+    na1 = np.float64(weights_sum*0.01*amp)/np.sum(arr*weights, dtype=np.float64)
+    na1 = np.float32(na1)
+    na1 = np.clip(na1, 1.0, 300.0)
+    return na1

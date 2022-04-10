@@ -9,7 +9,7 @@ from tqdm import tqdm
 from data import test_dataloader
 from metrics import compute_psnr, compute_ssim
 from model import RED
-from utils import AverageMeter, Config, Timer, ensure_dir, init_env
+from utils import AverageMeter, Timer, ensure_dir, init_env, parse_config
 
 
 def parse_arguments():
@@ -23,8 +23,9 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    config = Config(args.config)
+    config = parse_config(args.config)
     device = init_env(args, config)
+
     model = RED().to(device)
 
     ckp = torch.load(args.checkpoint)

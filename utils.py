@@ -7,38 +7,8 @@ from enum import Enum
 import numpy as np
 import toml
 import torch
+from addict import Dict
 from torch.backends import cudnn
-
-
-class Config:
-    def __init__(self, path: str):
-        super(Config, self).__init__()
-
-        raw_config = toml.load(path)
-        self.attr = _SimpleBunch(raw_config)
-
-    def __getattr__(self, item):
-        if hasattr(self.attr, item):
-            return self.attr.__getattribute__(item)
-        else:
-            return None
-
-    def __repr__(self):
-        return self.attr.__repr__()
-
-
-class _SimpleBunch:
-    """Recursively transforms a dictionary into a Bunch via copy."""
-
-    def __init__(self, d: dict):
-        for k, v in d.items():
-            if isinstance(v, (list, tuple)):
-                setattr(self, k, [_SimpleBunch(x) if isinstance(x, dict) else x for x in v])
-            else:
-                setattr(self, k, _SimpleBunch(v) if isinstance(v, dict) else v)
-
-    def __repr__(self):
-        return '<' + str('\n '.join(f'{k} : {repr(v)}' for (k, v) in self.__dict__.items())) + '>'
 
 
 class AverageMeter(object):
@@ -116,10 +86,10 @@ class Timer(object):
             self.runtimes.pop(0)
 
 
-def repeater(data_loader):
-    for loader in itertools.repeat(data_loader):
-        for data in loader:
-            yield data
+def repeater(iterable):
+    for it in itertools.repeat(iterable):
+        for item in it:
+            yield item
 
 
 def ensure_dir(path):
@@ -129,7 +99,7 @@ def ensure_dir(path):
 
 def init_env(args, config):
     # set random seed
-    if config.seed is not None:
+    if config.seed:
         seed = config.seed
         random.seed(seed)
         np.random.seed(seed)
@@ -146,24 +116,6 @@ def init_env(args, config):
     return device
 
 
-def get_na(arr, amp=1.0):
-    """Estimate the amplification factor"""
-
-    bins = np.logspace(0, 8, 128, endpoint=True, base=2.0)  # create n bins
-    bins = (bins-1)/255.
-
-    weights = np.float32((np.logspace(0, 5, 127, endpoint=True, base=10.0)))
-    weights = np.flip(weights)
-    weights = weights / np.max(weights)
-
-    selection_dict = {w: np.logical_and(bins[i] <= arr, arr < bins[i+1])
-                      for i, w in enumerate(weights)}
-    weights = np.select(condlist=selection_dict.values(), choicelist=selection_dict.keys())
-    weights_sum = np.sum(weights, dtype=np.float64)
-
-    del selection_dict
-
-    na1 = np.float64(weights_sum*0.01*amp)/np.sum(arr*weights, dtype=np.float64)
-    na1 = np.float32(na1)
-    na1 = np.clip(na1, 1.0, 300.0)
-    return na1
+def parse_config(path):
+    config = Dict(toml.load(path))
+    return config
