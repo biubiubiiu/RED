@@ -10,6 +10,8 @@ A PyTorch implementation of *[CVPR 2021 paper](https://openaccess.thecvf.com/con
 - torchvision
 - requirements.txt
 
+Please note that **Python>=3.6 is required** since I used f-strings.
+
 ## Dataset Preparation
 
 The model is trained on the [SID Sony dataset](https://github.com/cchen156/Learning-to-See-in-the-Dark). To prepare dataset, please specify `data_dir` in [config.toml](config.toml) and organize the dataset to the following structure:
@@ -27,8 +29,6 @@ The model is trained on the [SID Sony dataset](https://github.com/cchen156/Learn
 ```
 
 ## Training
-
-Please note in order to use this repo, **Python>=3.6 is required** since I used f-strings.
 
 To train the model, run:
 
