@@ -67,7 +67,7 @@ class SID(Dataset):
                                        desc=f'Loading {type} data to RAM'):
 
             with rawpy.imread(lq_fname) as lq_raw:
-                lq_arr = lq_raw.raw_image_visible.astype(np.float32)
+                lq_arr = lq_raw.raw_image_visible.copy().astype(np.float32)
                 lq_arr = np.maximum(lq_arr-512, 0) / (16383-512)  # subtract the black level
                 amp = self.estimate_amplification(lq_fname, gt_fname, lq_arr)
                 self.lq_rawarrays.append(lq_arr*amp)  # apply amplification
