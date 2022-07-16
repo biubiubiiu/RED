@@ -9,11 +9,11 @@ def compute_psnr(x, y, data_range=255.0):
     return score
 
 
-def compute_ssim(x, y, kernel_size=11, kernel_sigma=1.5, data_range=255.0, k1=0.01, k2=0.03):
+def compute_ssim(x, y, kernel_size=11, kernel_sigma=1.5, data_range=255.0, k1=0.01, k2=0.03, downsample=False):
     x, y = x / data_range, y / data_range
     # average pool image if the size is large enough
     f = max(1, round(min(x.size()[-2:]) / 256))
-    if f > 1:
+    if f > 1 and downsample:
         x, y = F.avg_pool2d(x, kernel_size=f), F.avg_pool2d(y, kernel_size=f)
 
     # gaussian filter
