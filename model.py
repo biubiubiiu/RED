@@ -99,8 +99,7 @@ class RED(nn.Module):
         self.conv32_8_cat = nn.Sequential(
             Conv(128, 32, groups=4, bias=True, a=1),
             Conv(32, 192, groups=1, bias=True, a=0.2),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.PixelShuffle(4)
+            nn.LeakyReLU(0.2, inplace=True)
         )
 
         self.conv2x = Conv(4, 12, kernel_size=5, bias=True, a=1)
@@ -112,8 +111,8 @@ class RED(nn.Module):
     def channel_shuffle(self, x, groups):
         return rearrange(x, 'b (c1 c2) h w -> b (c2 c1) h w', c1=groups)
 
-    def forward(self, low):
-        low2x = self.pixelshuffle_inv(low, 2)  # 2x branch starts
+    def forward(self, raw):
+        low2x = self.pixelshuffle_inv(raw, 2)  # 2x branch starts, RGGB
         low8x = self.pixelshuffle_inv(low2x, 4)  # 8x branch starts
         low32x = self.pixelshuffle_inv(low2x, 16)  # 32x branch starts
 
@@ -125,11 +124,10 @@ class RED(nn.Module):
 
         out32x = torch.cat([rdb1, rdb2, rdb3], dim=1)
         out32x = self.rdball(out32x)+feat32x
-        out32x = self.up4(out32x)
 
         # 8x branch
         feat8x = self.resblock8x(low8x)
-        rdb8x = self.conv_rdb8x(out32x)
+        rdb8x = self.conv_rdb8x(self.up4(out32x))
 
         out8x = torch.cat([feat8x, rdb8x], dim=1)
         out8x = self.channel_shuffle(out8x, groups=2)
@@ -137,7 +135,8 @@ class RED(nn.Module):
 
         # 2x branch
         feat2x = self.conv2x(low2x)
-        out2x = torch.cat([feat2x, out8x], dim=1)
-        out2x = self.up2(self.conv_2_8_32(out2x))
+        out2x = torch.cat([feat2x, self.up4(out8x)], dim=1)
+        out2x = self.conv_2_8_32(out2x)
 
-        return torch.clamp(out2x, min=0.0, max=1.0)
+        out = self.up2(out2x)
+        return torch.clamp(out, min=0.0, max=1.0)

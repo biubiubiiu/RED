@@ -31,8 +31,8 @@ def main():
     ckp = torch.load(args.checkpoint)
     model.load_state_dict(ckp)
 
-    psnr = AverageMeter('PSNR', ':6.3f')
-    ssim = AverageMeter('SSIM', ':6.3f')
+    psnr = AverageMeter('PSNR', ':6.4f')
+    ssim = AverageMeter('SSIM', ':6.4f')
     batch_time = AverageMeter('Time', ':.4f')
     timer = Timer()
 
@@ -53,12 +53,18 @@ def main():
                 pred = pred[:, :, :original_shape[0], :original_shape[1]]
                 gt = gt[:, :, :original_shape[0], :original_shape[1]]
 
+                out = pred.mul(255).add_(0.5).clamp_(0, 255).byte()
+                gt = gt.mul(255).add(0.5).clamp_(0, 255).byte()
+
+                psnr.update(compute_psnr(out, gt))
+                ssim.update(compute_ssim(out, gt))
+
                 if not args.cpu:
                     torch.cuda.synchronize()
 
             batch_time.update(timer.diff)
-            psnr.update(compute_psnr(pred, gt, data_range=1.0))
-            ssim.update(compute_ssim(pred, gt, data_range=1.0))
+            psnr.update(compute_psnr(out, gt))
+            ssim.update(compute_ssim(out, gt))
 
             save_image(pred, osp.join(result_dir, f'{id:0>5}.png'))
 

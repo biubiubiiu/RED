@@ -15,7 +15,7 @@ from utils import repeater
 
 def train_dataloader(config):
     dataloader = DataLoader(
-        SID(config, filter=config.train_data, type='train'),
+        SID(config, type='train'),
         batch_size=config.batch_size,
         shuffle=True,
         num_workers=config.num_workers,
@@ -26,7 +26,7 @@ def train_dataloader(config):
 
 def val_dataloader(config):
     dataloader = DataLoader(
-        SID(config, filter=config.val_data, type='val'),
+        SID(config, type='val'),
         batch_size=1,
         shuffle=False,
         num_workers=config.num_workers
@@ -36,7 +36,7 @@ def val_dataloader(config):
 
 def test_dataloader(config):
     dataloader = DataLoader(
-        SID(config, filter=config.test_data, type='test'),
+        SID(config, type='test'),
         batch_size=1,
         shuffle=False,
         num_workers=config.num_workers
@@ -46,15 +46,16 @@ def test_dataloader(config):
 
 class SID(Dataset):
 
-    def __init__(self, config, filter=None, type='train'):
+    def __init__(self, config, type='train'):
         super().__init__()
 
         self.config = config
         self.training = type == 'train'
+        self.filter = getattr(config, f'{type}_data')
 
-        lq_files = sorted(glob.glob(osp.join(config.data_dir, 'short', filter)))
+        lq_files = sorted(glob.glob(osp.join(config.data_dir, 'short', self.filter)))
 
-        self.ids = list(map(lambda it: it[-17:-12], lq_files))  # match by image id
+        self.ids = list(map(lambda it: osp.basename(it)[:5], lq_files))  # match by image id
         gt_files = [glob.glob(osp.join(config.data_dir, 'long', f'{id}*.ARW'))[0]
                     for id in self.ids]
 
@@ -113,7 +114,7 @@ class SID(Dataset):
         return {'lq': lq, 'gt': gt, 'id': id, 'original_shape': (h, w)}
 
     def estimate_amplification(self, lq_fname, gt_fname, arr):
-        if self.config.gt_amp:
+        if self.training or self.config.gt_amp:
             in_exposure = float(osp.basename(lq_fname)[9:-5])
             gt_exposure = float(osp.basename(gt_fname)[9:-5])
             coeff = min(gt_exposure / in_exposure, 300)

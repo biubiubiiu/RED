@@ -21,7 +21,7 @@ total_iters = 1000005
 batch_size = 8
 patch_size = 512
 
-gt_amp = false  # if true, use ground-truth exposure for pre-amplification
+gt_amp = true  # if true, use ground-truth exposure for pre-amplification
 
 # Runtime Settings
 log_step = 100
