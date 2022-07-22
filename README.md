@@ -44,7 +44,7 @@ The test a pretrained model, run:
 python test.py config.toml ${MODEL_PATH}
 ```
 
-In addition, two pretrained models on the SID Sony dataset, which use ground-truth amplification and estimated amplification respectively, are provided under `pretrained/`.
+A pretrained model on the SID Sony dataset is provided under `pretrained/`.
 
 ## Results
 
